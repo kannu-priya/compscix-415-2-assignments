@@ -5,26 +5,45 @@ date: "February 4, 2018"
 output: html_document
 ---
 
+##Set up
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library (mdsr)
+library (tidyverse)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+My Github repository for my assignments can be found at this URL: https://github.com/kannu-priya/compscix-415-2-assignments.git
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+#Explore WorldCities data frame
 
-```{r cars}
-summary(cars)
+About World Cities Data:
+The Data set has list of 23018 cities as rows (observations) and 10 variable columns covering some basic attributes about the cities. The variables in the data set are - City Name, 2 letter country code, country region, ISO city code, latitude & longitude, population etc. 
+
+Lets dig into WorldCities data set
+
+
+```{r load_package, warning=FALSE, message=FALSE}
+data("WorldCities")
+glimpse(WorldCities)
+WorldCities <- head(WorldCities, 200)
+country_col <- WorldCities$country
+unique(country_col)
+region <- WorldCities$region
+unique(region)
+WorldCities %>% select(country) %>% unique()
+WorldCities %>% ggplot (aes (x=population)) +
+  geom_histogram() +
+  xlab ('City Population')
+
+WorldCities %>% ggplot (aes (x=population)) +
+  geom_histogram() +
+  xlab ('City Total Population') +
+  ylab ('Count of Cities')+
+  ggtitle ('Population Distribution Chart')+
+  theme_bw()
+
+
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
