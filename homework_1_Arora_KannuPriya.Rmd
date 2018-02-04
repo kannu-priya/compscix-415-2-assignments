@@ -1,0 +1,49 @@
+---
+title: "COMPSCIX 415.2 Homework 1"
+author: "Kannu-priya"
+date: "February 4, 2018"
+output: html_document
+---
+
+##Set up
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library (mdsr)
+library (tidyverse)
+```
+
+
+My Github repository for my assignments can be found at this URL: https://github.com/kannu-priya/compscix-415-2-assignments.git
+
+#Explore WorldCities data frame
+
+About World Cities Data:
+The Data set has list of 23018 cities as rows (observations) and 10 variable columns covering some basic attributes about the cities. The variables in the data set are - City Name, 2 letter country code, country region, ISO city code, latitude & longitude, population etc. 
+
+Lets dig into WorldCities data set
+
+
+```{r load_package, warning=FALSE, message=FALSE}
+data("WorldCities")
+glimpse(WorldCities)
+WorldCities <- head(WorldCities, 200)
+country_col <- WorldCities$country
+unique(country_col)
+region <- WorldCities$region
+unique(region)
+WorldCities %>% select(country) %>% unique()
+WorldCities %>% ggplot (aes (x=population)) +
+  geom_histogram() +
+  xlab ('City Population')
+
+WorldCities %>% ggplot (aes (x=population)) +
+  geom_histogram() +
+  xlab ('City Total Population') +
+  ylab ('Count of Cities')+
+  ggtitle ('Population Distribution Chart')+
+  theme_bw()
+
+
+```
