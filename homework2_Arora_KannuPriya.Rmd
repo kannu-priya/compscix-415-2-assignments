@@ -1,0 +1,230 @@
+---
+title: "R Notebook"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+Week 2 - Assignment
+
+#3.2.4 Exercises
+
+```{r  load_package, warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+(1) ggplot function without mapping of geom function gives a blank box
+(2) mpg data frame contains 234 rows and 11 columns.
+(3) 'drv'  variable captures whether the car is front wheel, rear wheel or 4 wheel drive.
+(4) Scatter plot of highway mileage (hwy) vs number of cylinders (cyl)
+
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=hwy, y=cyl))
+```
+
+
+(5) Scatterplot of vehicle class vs drv. 
+
+Here the graph has taken 2 character vectors - 'class' and 'drv' thus there are finite number of class + drv combinations possible. In scatterplot, the data has have very high overlap of observations and is not showing the frequency of each combination. If the intend is to understand what class of cars are frequently used with which type of wheel drive - front, rear or 4 wheel, then a simple table or bar chart will be better representation,
+
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=class, y=drv))
+
+```
+
+
+#3.3.1 Exercises
+(1) For changing aesthetics of whole graph, the code "color = "blue""" should have been outside aes parenthesis
+
+(2) In mpg data frame, there are 4 continuous variables - displ, hwy, cty, cyl and 8 categorical variables - manufacturer, model,year, trans, drv, fl and class
+The character variables are categorical and continuous variables are numeric or integers. 'Year' is the only exception which is integer but has discrete value. In the context of year of manufacture, year can be taken as categorical variable 
+
+```{r}
+summary(mpg)
+```
+
+(3) Let me take the continuous variable 'displ' and map to different aesthetics- color, size and shapes. 
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping = aes(x=displ, y=hwy, color=cyl))
+```
+```{r}
+ggplot(data=mpg) + geom_point(mapping = aes(x=displ, y=hwy, size=cyl))
+```
+
+
+Using shape with continuous variable gives below error:
+
+Error: A continuous variable can not be mapped to shape
+
+[CODE : ggplot(data=mpg) + geom_point(mapping = aes(x=displ, y=hwy, shape=cyl))]
+
+
+How do these aesthetics behave differently for categorical vs. continuous variables?
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping = aes(x=displ, y=hwy, color=fl))
+```
+
+In continuous variables, the aesthetics are demonstrated on gradient scale whereas in categorical variable, the values have one on one mapping to the color/shape/size
+
+(4) If all three aesthetics- color, shape and size are used on a discrete variable, then color and size are taken (shape is ignored).
+
+If color and size aesthetics are used on same continuous variable, the graph shows both aesthetics with 2 legends. 
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping = aes(x=displ, y=hwy, color=cty, size=cty))
+```
+
+(5) Stroke aesthetic changes the width of border and this can only be used with shapes that can be colored separately inside and outside 
+
+```{r}
+ggplot(data=mpg)+geom_point(mapping = aes(x=displ, y=hwy), shape=22, stroke=2)
+```
+
+(6) If aesthetic is mapped to a formula, such as the logical function below, then the aesthetic gets applied to result of the formula. Here the 2 possible results of True or False are mapped to different color
+
+```{r}
+ggplot(data=mpg)+geom_point(mapping = aes(x=displ,y=hwy, color=displ<5))
+```
+
+#3.5.1 Exercises
+
+(4) With use of facets, the graph gets split into separate sections. This makes the data set more structured. 
+Aesthetic vs Facets- with aesthetics, since data resides within same frame of the scatter plot, analyzing the inter relationship of observations is easy. with Facets, multiple graphs will have to be reviewed to understand the trend and relationships. But if data is large, aesthetics will give a highly cramped and cluttered graph.Facets on the other hand will split the data into multiple graphs and thus more user friendly. 
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow=2)
+```
+
+(5) Facet_Wrap:
+
+nrow - defines the number of rows in which graphs will be displayed
+
+ncol - defines the number of columns for graphs
+
+other arguments available with Facet_wrap are dir (horizontal or vertical direction), labeller, as.table etc.
+
+Facet_grid forms matrix graphs that show combination of multiple discrete variables. The row and columns are determined automatically from the faceting variables.
+
+
+#3.6.1 Exercises
+(1) Geoms - 
+Line - geom_line | Box plot - geom_boxplot | Histogram - geom_histogram | Area: geom_area
+
+(2) Run the code-
+
+```{r}
+ggplot(data=mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+(3) Show.legend controls the display of legend. "show.legend = False" will remove the legend from graph. There is no impact on the graph if the legend is removed.
+In the chapter, show.legend = False was used when group function was explained and there were multiple graphs to be displayed in same row. The graphs and space might have been cramped if legend was displayed.
+
+(4) Se argument displays confidence interval around the smooth. 
+
+(5) There is no difference in the graphs since same arguments are given within ggplot function in first code and in further layers of geoms in second code. By default, the arguments of ggplot gets applied to all layers and if there are any aesthetics given inside geom then that overrides the master layer of ggplot.
+
+(6) Code and reproduced graphs are as follows:
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy)) + 
+  geom_point(size=3) +
+  geom_smooth(se=FALSE)
+```
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy)) + 
+  geom_point(size=3) +
+  geom_smooth(aes(group = drv), se=FALSE)
+```
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy, color = drv)) + 
+  geom_point(size=3) +
+  geom_smooth(se=FALSE)
+```
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy)) + 
+  geom_point(mapping = aes(color = drv), size=3) +
+  geom_smooth(se=FALSE)
+```
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy)) + 
+  geom_point(mapping = aes(color = drv), size=3) +
+  geom_smooth(mapping = aes(linetype = drv), se=FALSE)
+```
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy)) + 
+  geom_point(color = "white", size=3) +
+  geom_point(mapping = aes(color = drv))
+```
+
+#3.7.1 Exercise
+
+(2) geom_bar() by default takes the height of the bar as count of observations 
+  geom_col() - on the other hand uses height of the bars to represent values of a variable. For example below, the y-axis uses cyl data for height of bars
+  
+```{r}
+ggplot(data = mpg) +
+  geom_col (mapping = aes(x=drv, y=cyl))
+```
+
+#1.Look at the data graphics at the following link: What is a Data Scientist. Please briefly critique the designer’s choices. What works? What doesn’t work? What would you have done differently?
+
+
+The graphic has covered many dimensions of data science profession and gives a good perspective to readers on demand and potential places to source data scientist from. 
+
+Given below is a review of the overall graphic and individual charts:
+
+(1) Graphic nowhere talks about the survey population and sample used for each observation. We don't know if number of data scientists and organizations surveyed are 5, 50 or 100. A general demographics of people and organization surveyed would bring credibility to the whole analysis  
+
+    As an example - I am curious to know if respondents for BI and Data Scientist questions were equivalent in     years of experience, role, seniority level, industry, size of organization etc.. A person working at junior level and in a small organization will understandably answer the questions on behaviours and qualification differently as compared to a senior professional in a large organization. It will be misleading to attribute that difference to data science as a profession 
+
+(2) The highlight of each graph is mentioned even before the question is introduced. Ideally each graph should be bringing out that highlight in itself. If there is still need to call out the highlight then it should tie with the graph. 
+
+(3) DEMAND FOR DATA SCIENTIST
+It is easy to read the pie chart with help of labels. The primary message - "2/3 believe demand for data scientist will outpace supply" is not coming through pie chart though. A simple list or standard mean curve could be better for this statistics. Alternatively, a bar chart with logical grouping the response categories can also solve the purpose.
+
+(4) BEST SOURCE FOR DATA SCIENTIST
+It is not clear why BI was handpicked for comparison with data scientists. It seems the graph is trying to tell what researcher believed in, and not what data is telling. As per the graph, best source of data scientist professionals is computer science students. It is not clear why BI was taken instead of computer science engineers for the analysis of qualification and responsibilities
+More than 50% (2nd and 3rd boxes) believe the source for data science talent is students and professionals outside computer science and BI stream. There are large possible areas these other people may be coming from. In other words, more than 50% of the responses pointed to 'others'. Graph viewers continue to remain in dark on what are other major streams that should be considered
+
+(5) BIGGEST OBSTACLE TO DATA SCIENCE ADOPTION
+The gradient colors used are going well with the decreasing order of figures. Considering the significant difference of percentages from top two categories - training/ resources (64%) vs rest of the categories, a bar chart can better represent the magnitude difference in pictorial fashion.  
+
+(6) DATA SCIENTIST ARE MORE LIKELY TO HAVE ADVANCED DEGREES THAN BI PROFESSIONALS
+The ascending order of education levels is helping the overall messaging of chart. However because of use of multiple graphs (faceting), it is left to viewers to read through each % figures and find out if there is a variation of trend. 
+
+(7) DATA SCIENTIST AND BI BACKGROUND:
+The focus of the article is Data scientist, so visually it will be better to have data scientist group represented first followed by the other comparison group. In this graph, the BI figures are shown first which is making BI as the focus group. Also, the choice of color should be reversed - blue color used is brighter and gets higher attention as compared to the dark grey. 
+
+(8) The survey question corresponding to this graph is not shown. It is hard to understand what 100% of pie chart signifies. The important information about whether automation will increase or decrease the demand for data scientist can be shown as a win/loss bar chart - the down pull to data scientist demand can be a bar below x-axis line and the much higher increase in demand can have steeper bar above x-axis.
+
+(8) CHARACTERISTICS OF DATA SCIENTISTS
+The percentage figures used at the bottom is making the graph useful. On the downside, I think the first segment of statement is not apt utilization of space. 
+The statements of normal data scientist and big data scientist are increasing in complexity but it is not visually coming out from the graph. 
+The bottom bar may have been an scale with an arrow pointing to big data or the whole graphics can be reorganized around a scale.
+Normal English language is read from left to right. It will be intuitive for people to understand the ascending scale if represented in that direction of left to right. In the graph, the higher complex big data scientist is shown first on left followed by the simpler & more common normal data scientist statements. Interestingly, in the preceding charts, figures related to Data scientists were shown on right hand side after BI. The order is reversed in current graph! 
+
+(9) DATA SCIENTIST INVOLVEMENT IN DATA LIFECYCLE
+The DS group is taken first with higher bars so that is keeping the focus on DS. The choice of faceting is a con. 
+Faceting on data life cycle is losing the important insight on how within data scientist stream, the requirement changes from life cycle stage to other. For this graph, a scatter plot with line and aesthetics would be stronger.
+
+(10) WHO DOES DATA SCIENTIST WORK WITH
+The boxes are clear and easy to read. Since the % figures are very close, arranging them in ascending order could be better.
+The color shades are also not making much difference. 
+
+Overall, the variety of survey questions is bringing good multidimensional insight on the data scientist field. The use of only percentages and no mention of survey population is the biggest drawback that makes the graphic unreliable. The author could have also considered logical grouping of survey questions into sections. Possible groups I can think of are as follows. A brief background and description on the section would have resolved some of the concerns highlighted in above points. 
+
+- Data scientist demand
+- Data Scientist Career progression
+- Role of a data scientist
+
