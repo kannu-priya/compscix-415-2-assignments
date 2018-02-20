@@ -1,0 +1,234 @@
+---
+title:  "Assignment 3"
+Author: Kannu Priya
+Date:   Feb 15, 2018
+output: html_document
+---
+
+```{r load_package, warning=FALSE, message=FALSE }
+library(tidyverse)
+library(nycflights13)
+```
+
+#3.8.1 Exercises
+
+1. What is the problem with this plot? How could you improve it?
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point()
+```
+
+There is high overlap of points due to which it is hard to determine where highest concentration of observations lies. To offset the problem, we can use jitter to add a small noise to the data and have discrete points on scatterplot. Updated graph with jittering is as follows:
+
+
+```{r}
+ggplot(mpg, aes(cty,hwy))+
+  geom_jitter()
+```
+
+
+2. What parameters to  geom_jitter()  control the amount of jittering?
+
+Geom_jitter() takes width and height as 2 parameters to control amount of horizontal and vertical jittering
+
+3. Compare and contrast geom_jitter() with geom_count()
+
+
+```{r}
+ggplot(mpg,aes(cty,hwy))+
+  geom_jitter()
+```
+
+```{r}
+ggplot(mpg,aes(cty,hwy))+
+  geom_count()
+```
+
+
+geom_count() - maps count of observations to point area.The higher concentration of points are represented with bigger point area. This can be easier to read as compared to jitter where all points are shown with random noise. 
+
+4.  What’s the default position adjustment for  geom_boxplot() ? Create a visualization of the  mpg  dataset that demonstrates it.
+Position_dodge() is default position adjustment if a third variable is added to boxplot(). 
+
+
+```{r}
+ggplot(mpg,aes(class,cty,fill=drv))+
+  geom_boxplot()
+```
+
+
+# 3.9.1 Exercises 
+
+1.  Turn a stacked bar chart into a pie chart using  coord_polar()
+
+```{r}
+ggplot(mpg)+
+  geom_bar(aes(class,fill=class))+
+  coord_polar()
+
+```
+
+
+2.  What does  labs()  do? Read the documentation.
+
+Labs manages labeling for the graph - it can be used to add labels to x, y axis or legend, give title and subtitle or even include a caption.
+
+4.  What does the plot below tell you about the relationship between city and highway mpg? Why is  coord_fixed()  important? What does  geom_abline()  do?
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point() + 
+  geom_abline()+
+  coord_fixed()
+  
+```
+ 
+ The graphs shows linear positive correlation of two variables - cty and hwy. Overall cars have higher highway mileage as compared to city mileage (values going towards 40 and above on y-axis). 
+ Through abline() function, the straight line got added with default slope, intercept and elevation of 45 degrees. Coord_fixed() is giving a fixed scale to the graph - 1 unit of x axis is same as 1 unit of y axis. This is important as here the units of x-axis and y-axis are same, and without coord_fixed() the physical representation of axes will be disproportionate. The important observation of highway mileage being relatively higher than city mileage would not have come out easily if coord_fixed() was not used
+ 
+# Exercises 4.4
+
+1. Why does this code not work?
+
+my_variable <- 10
+my_varıable
+
+There is a typo in the variable called in second row. It should be variable with an "i", and not numeric "1"
+
+2.  Tweak each of the following R commands so that they run correctly:
+
+```{r}
+library(tidyverse)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+filter(mpg, cyl == 8)
+filter(diamonds, carat > 3)
+
+
+```
+
+# Exercises 5.2.4
+
+1.  Find all flights that
+
+    (1) Had an arrival delay of two or more hours
+    
+
+```{r}
+library(nycflights13)
+(var1 <- filter(flights, arr_delay >= 120))
+```
+
+
+  (2) Flew to Houston ( IAH  or  HOU )
+    
+```{r}
+filter(flights, dest == "IAH" | dest == "HOU")
+```
+
+  (3) Were operated by United, American, or Delta
+    
+```{r}
+filter(flights, carrier == "AA" | carrier == "UA" | carrier =="DL")
+```
+
+  (4) Departed in summer (July, August, and September)
+  
+```{r}
+filter(flights, month >=7, month <=9)
+```
+
+  (5) Arrived more than two hours late, but didn’t leave late
+  
+```{r}
+filter(flights, arr_delay >= 120, dep_delay <= 0)
+```
+
+  (6) Were delayed by at least an hour, but made up over 30 minutes in flight
+  
+```{r}
+filter(flights, dep_delay>=60, dep_delay - arr_delay >=30)
+
+```
+
+  (7) Departed between midnight and 6am (inclusive)
+  
+```{r}
+filter(flights, dep_time>=0, dep_time <= 600)
+```
+
+ 
+ 2.  Another useful dplyr filtering helper is  between() . What does it do? Can you use it to simplify the code needed to answer the previous challenges?
+ 
+ between() function provides a shortcut for finding values in between a range. For example, the last question of "departed between midnight and 6am(inclusive)" can be rewritten as follows:
+ 
+```{r}
+filter(flights, between(dep_time,0,600))
+```
+
+3. How many flights have a missing  dep_time ? What other variables are missing? What might these rows represent?
+
+Flights with missing departure time:
+
+```{r}
+filter(flights, is.na (dep_time))
+```
+
+These flights also have Dep_delay and arrival times missing. Departure delay is a dependent variable dep_time but missing arrival time also missing could signify the flights were cancelled/ did not fly.
+
+4.  Why is  NA ^ 0  not missing? Why is  NA | TRUE  not missing? Why is  FALSE & NA  not missing? Can you figure out the general rule? ( NA * 0  is a tricky counterexample!)
+
+- NA ^ 0 will be 1 (any value to the power of 0 is 1)
+- NA| TRUE - means NA OR TRUE is already TRUE
+- FALSE & NA - one value of AND logic is FALSE so irrespective of other value, the result is FALSE
+- NA*0 is NA - In general, the all operations on NA will be NA except for logic operations where missing value can be ignored
+
+#5.4.1 Exercises
+
+1.  Brainstorm as many ways as possible to select  dep_time,  dep_delay,  arr_time, and  arr_delay  from  flights.
+
+Through simple select function:
+
+```{r}
+select(flights, dep_time, dep_delay, arr_time, arr_delay)
+```
+
+other variations:
+select(flights, contains("time"))
+select(flights, contains("delay"))
+select(flights, starts_with("dep"), starts_with("arr"))
+select(flights, ends_with("time"), ends_with("delay"), -starts_with("sched_dep_time"), -starts_with("air"), -starts_with("sched_arr"))
+
+2.  What happens if you include the name of a variable multiple times in a  select()  call?
+
+The repetitions are ignored and variable is included only single time
+
+3. What does the  one_of()  function do? Why might it be helpful in conjunction with this vector?
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+
+One_of selects the character variables from a vector. when used within select function, it by default takes the table as vector
+
+Using One_of with below vector, has simplified shortlisting of variables from the given table. 
+
+
+```{r}
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+select(flights, one_of(vars))
+```
+
+4. Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+
+```{r}
+select(flights, contains("TIME"))
+```
+
+Contrary to standard R syntax, the select function ignores case. Here, even though TIME was in upper case, the result included all variables with time mentioned in name. For changing the default, ignore.case = FALSE can be used
+
+The code and corresponding error as no matching variables are found:
+
+select(flights, contains("TIME", ignore.case = TRUE))
+
+Error: `FALSE` must resolve to integer column positions, not a logical vector
