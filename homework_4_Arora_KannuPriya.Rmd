@@ -1,0 +1,241 @@
+---
+title: "Assignment 4"
+Date: February 23, 2018
+output:
+  html_document: default
+  html_notebook: default
+Author: Kannu Priya Arora
+---
+
+```{r load_packages, include=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library('rvest')
+library(nycflights13)
+```
+
+#5.6.7 Exercises
+
+2.  Come up with another approach that will give you the same output as  not_cancelled %>% count(dest)  and  not_cancelled %>% count(tailnum, wt = distance)  (without using  count() ).
+
+```{r}
+not_cancelled <- filter(flights, !is.na (arr_time), !is.na(dep_delay))
+
+not_cancelled %>% group_by(dest) %>% summarise (number = n())
+```
+
+```{r}
+not_cancelled %>% count(tailnum, wt = distance)
+
+not_cancelled %>% group_by (tailnum) %>% summarise (sum(distance, na.rm = TRUE))
+```
+
+
+3.  Our definition of cancelled flights ( is.na(dep_delay) | is.na(arr_delay)  ) is slightly suboptimal. Why? Which is the most important column?
+
+If the flight has not departed then there will not be an arrival time. So only !is.na(dep_time) can suffice for deriving non_cancelled flights
+
+4.  Look at the number of cancelled flights per day. Is there a pattern? Is the proportion of cancelled flights related to the average delay?
+
+```{r}
+
+flights  %>% 
+    group_by(year,month, day) %>%
+    summarise(cancelled_ratio = sum(is.na(dep_time))/ n(), avg_delay = mean(dep_delay, na.rm = TRUE)) %>%
+  ggplot(mapping = aes(x=avg_delay, y=cancelled_ratio)) +
+  geom_smooth(se=FALSE)
+```
+
+There is direct correlation of average delay in flight departure to probability of flight cancellation in a day. The cancelled ratio increases at marginal rate for initial delay but increases steadily after average delay of 10. 
+
+5.  Which carrier has the worst delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about  flights %>% group_by(carrier, dest) %>% summarise(n()) )
+
+
+```{r}
+flights %>%
+  group_by(carrier) %>%
+  summarise (avg_delay = mean(dep_delay,na.rm = TRUE)) %>%
+  arrange(desc(avg_delay))
+
+```
+
+To check the outlier by destination and whether it is airport effect:
+
+```{r}
+flights %>% group_by(carrier, dest) %>% summarise(avg_delay = mean(dep_delay, na.rm=TRUE)) %>%
+group_by(carrier) %>% summarise(avg_delay_dest = mad(avg_delay, na.rm=TRUE)) %>%
+arrange (desc(avg_delay_dest))
+
+```
+
+
+6. What does the  sort  argument to  count()  do. When might you use it?
+
+The sort argument will arrange the count data in descending order. 
+
+
+#10.5 Exercises
+
+1.  How can you tell if an object is a tibble? (Hint: try printing  mtcars , which is a regular data frame).
+
+Normal data.frame will print entire data set whereas a tibble will only show 10 rows of data at a time. If the data set being used has very large set of observations, then tibble will be more efficient
+
+2.  Compare and contrast the following operations on a  data.frame  and equivalent tibble. What is different? Why might the default data frame behaviours cause you frustration?
+
+
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+df$x
+df[, "xyz"]
+df[, c("abc", "xyz")]
+```
+
+```{r}
+df <- tibble (abc = 1, xyz = "a")
+df$x
+df[, "xyz"]
+df[, c("abc", "xyz")]
+```
+
+Differences:
+(a) Data frame did partial matching in first code (df$x) and gave inaccurate response. Tibble being stricter, the partial match did not happen
+(b) Tibble shows column type followed by name which is helpful for quick understanding of variable. In Data frame, the list gets displayed directly without data type information
+(c) Subset of tibble is always a tibble but subset of data frame can be a vector
+
+
+3.  If you have the name of a variable stored in an object, e.g.  var <- "mpg" , how can you extract the reference variable from a tibble?
+
+
+```{r}
+var <- "drv"
+mpg[[var]]
+```
+
+
+6.  What option controls how many additional column names are printed at the footer of a tibble?
+
+n_extra argument controls extra columns to print abbreviated information. 
+getOption("tibble.max_extra_cols")
+
+to increase number of columns printed, width argument can be used. options(width = inf) will print all columns.
+
+
+#12.3.3 Exercises
+
+2.  Why does this code fail?
+
+table4a %>% 
+  gather(1999, 2000, key = "year", value = "cases")
+#> Error in combine_vars(vars, ind_list): Position must be between 0 and n
+
+The code is failing because column headers, 1999 and 2000, should be in back ticks
+
+3.  Why does spreading this tibble fail? How could you add a new column to fix the problem?
+
+```{r}
+people <- tribble(
+  ~name,             ~key,    ~value,
+  #-----------------|--------|------
+  "Phillip Woods",   "age",       45,
+  "Phillip Woods",   "height",   186,
+  "Phillip Woods",   "age",       50,
+  "Jessica Cordero", "age",       37,
+  "Jessica Cordero", "height",   156
+)
+
+people2 <- people %>% group_by(name, key) %>% transmute(value_sum = cumsum(value)) %>% filter(value_sum != 45)
+spread(people2, key = key, value = value_sum)
+```
+
+
+Spreading was failing due to non unique observations. The issue was resolved by merging the following two rows and creating a cumulative value
+
+  "Phillip Woods",   "age",       45,
+  
+  "Phillip Woods",   "age",       50,
+  
+
+4.  Tidy the simple tibble below. Do you need to spread or gather it? What are the variables?
+
+Gather is needed to create a gender variable.
+
+```{r}
+preg <- tribble(
+  ~pregnant, ~male, ~female,
+  "yes",     NA,    10,
+  "no",      20,    12
+)
+
+tidyPreg <- preg %>% gather (male, female, key = "gender", value = "count")
+tidyPreg
+```
+
+#12.4.3 Exercises
+
+1.  What do the  extra  and  fill  arguments do in  separate() ? Experiment with the various options for the following two toy datasets.
+
+Extra & Fill arguments are for controlling the output when separator used is a character. 
+
+extra - Controls when there are too many pieces. By default, R will drop extra values and give a warning. Other arguments possible are "drop" - drop extra values & disable warning and "merge" - to control splitting as per biggest length (into) times
+
+fill - Determines what happens if there are not enough pieces. options possible are - warn, right and left
+
+```{r}
+tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>%
+   separate(x, c("one", "two", "three"), extra = "drop")
+```
+
+In above example, the 2nd data set had 4 values and by default "g" was getting dropped as extra. By changing value to drop, the warning message is suppressed
+
+Now changing the argument for extra to merge, the remaining extra variable will get concatenated as one cell
+
+```{r}
+tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>%
+   separate(x, c("one", "two", "three"), extra = "merge")
+```
+
+
+FILL example:
+
+```{r}
+tibble(x = c("a,b,c", "d,e", "f,g,i")) %>% 
+  separate(x, c("one", "two", "three"))
+```
+
+The above code, took missing value as NA in right most column and threw a warning. To make NA as value for first column, the fill setting can be changed to left, as given below
+
+```{r}
+tibble(x = c("a,b,c", "d,e", "f,g,i")) %>% 
+  separate(x, c("one", "two", "three"), fill = "left")
+```
+
+2.  Both  unite()  and  separate()  have a  remove  argument. What does it do? Why would you set it to  FALSE ?
+
+unite() combines columns into new variables. It by default removes the old columns that were used to create new variable. Setting remove argument to FALSE will keep the original variables intact in new copy of data frame.
+
+separate() - the original data field which was used for separation is not included as a result of separate() function. In order to keep the original data intact, remove argument will have to be set to FALSE
+
+
+# Additional Question - Import & Export
+
+Download the baby_names.txt file from Canvas which is in the Homework 4 assignment section.
+-   Load this file into R correctly and take a glimpse of the output.
+-   Export this file as an rds file and call it ‘baby_names.rds’.
+-   Reload the baby_names.rds file and take another glimpse.
+-   Show all of your code and the output. There should be two data import lines of code, one data export line of code, and two glimpses of the data.
+ 
+ 
+```{r}
+baby_file <- read_delim(file = 'D:/Kannu Priya/DataScience/compscix-415-2-assignments/baby_names.txt', "|")
+glimpse(baby_file)
+```
+
+
+- Export baby_file as an rds file and call it ‘baby_names.rds’
+- Reload the baby_names.rds file and take another glimpse
+
+```{r}
+write_rds (baby_file, "babyfile.rds")
+glimpse(read_rds("babyfile.rds"))
+
+```
+
