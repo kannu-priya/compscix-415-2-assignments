@@ -1,0 +1,194 @@
+---
+title: "Compscix-415-2-Homework 7"
+author: "Kannu Priya Arora"
+date: "Mar 17, 2018"
+output: 
+  html_document :
+  toc : TRUE
+---
+
+```{r load_packages, include=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(broom)
+```
+
+
+## House Prices prediction competition on Kaggle 
+
+### Exercise 1
+
+*Load the train.csv dataset into R. How many observations and columns are there?*
+
+No of observations - 1460
+No of columns - 81
+
+```{r}
+data_csv <- read_csv(file = 'D:/Kannu Priya/DataScience/compscix-415-2-assignments/assignment 8/train.csv')
+
+```
+
+###Exercise 2
+
+*Our first step is to randomly split the data into train and test datasets. We will use a 70/30 split. There is an R package that will do the split for you, but let’s get some more practice with R and do it ourselves by filling in the blanks in the code below.*
+
+```{r}
+# When taking a random sample, it is often useful to set a seed so that your work is reproducible. 
+# Setting a seed will guarantee that the same random sample will be generated every time, 
+# so long as you always set the same seed beforehand
+
+set.seed(29283)
+
+# This data already has an Id column which we can make use of.
+# Let's create our training set using sample_frac. Fill in the blank.
+train_set <- data_csv %>% sample_frac(0.7)
+
+# let's create our testing set using the Id column. Fill in the blanks.
+test_set <- data_csv %>% filter(!( Id %in% train_set$Id))
+```
+
+***
+
+###Exercise 3
+
+*Our target is called SalePrice. First, we can fit a simple regression model consisting of only the intercept (the average of SalePrice). Fit the model and then use the broom package to*
+
+  • *take a look at the coefficient* - 182176
+  
+  • *compare the coefficient to the average value of SalePrice, and* - coefficient and average SalePrice is same
+  
+  • *take a look at the R-squared.* - R squared is 0 as there is no variation and model is straight fit
+  
+*Use the code below and fill in the blanks.*
+
+
+```{r}
+# Fit a model with intercept only
+mod_0 <- lm(SalePrice ~ 1, data = train_set)
+
+# Double-check that the average SalePrice is equal to our model's coefficient
+(mean(train_set$SalePrice))
+tidy(mod_0)
+
+# Check the R-squared
+glance(mod_0)
+```
+
+***
+### Exercise 4
+
+*Now fit a linear regression model using GrLivArea, OverallQual, and Neighborhood as the features.* 
+
+  • *What kind of relationship will these features have with our target?*
+  
+  • *Can the relationship be estimated linearly?*
+  
+  • *Are these good features, given the problem we are trying to solve?*
+
+We can use ggplot to get an initial estimate of our data before the regression is fitted. A histogram of SalePrice confirms all observations are above point 0. Ggplot shows linear positive relationship for both GrLivArea and OverallQual and they both appear to be good features to predict variation of sale price. 
+
+Neighborhood on other hand shows high variation accross cities. For Brookside (BrkSide), as we can see in last histogram, the sales vary at large scale.
+
+All three are good features to start fitting the model.
+
+```{r}
+train_set %>% ggplot(mapping = aes(GrLivArea, SalePrice))+ geom_smooth()
+
+train_set %>% ggplot(mapping = aes(Neighborhood, SalePrice))+ geom_boxplot() + coord_flip()
+
+train_set %>% filter(Neighborhood == 'BrkSide') %>% ggplot (aes(SalePrice)) + geom_histogram()
+```
+
+*After fitting the model, output the coefficients and the R-squared using the broom package.*
+*Answer these questions:*
+
+  • *How would you interpret the coefficients on GrLivArea and OverallQual?*
+
+  Given other features being constant, every unit change in GrLivArea factor will increase the SalePrice by $62.661 (the coefficient)
+    
+  Similarly, given other features being constant, every unit change in OverallQual factor will increase the SalePrice by $22691 (the coefficient)
+  
+  • *How would you interpret the coefficient on NeighborhoodBrkSide?*
+
+  Mean Sale price difference between the BrkSide(Brookside) and  base city - Blmngtn (Bloomington Heights) is -14064.37 with Brookside being lower in sale price.
+  
+  • *Are the features significant?*
+
+  The p-value for first  two features - GrLivArea and OverallQual is almost 0 and we can thus say they are significant for predicting Sale Price outcome.
+  For NeighborhoodBrkSide, p-value is greater than 0.05 and thus statistically not a significant predictor for SalePrice.
+  
+  • *Are the features practically significant?*
+
+  GrLivArea - Above grade (ground) living area square feet. The feature is possible depiction of ground level surface area of the houses as a common preference of home buyers. While there is correlation, there are other factors such as lot size that may have stronger significance for prediction.
+  
+  OverallQual rates the overall material and finish of the house. This can be symbolic of condition and quality of house and thus a logical feature.
+  
+  Neighborhood generally varies in range for house prices. If it was a classifier problem statement where the desired output is whether the house will be high, medium or low in Sale Price, then Neighborhood might be stronger feature. It is hard to predict sale price of all houses in a particular neighborhood by ignoring all other features. 
+  
+  • *Is the model a good fit (to the training set)?*
+
+Adjusted R-squared value of greater than 0.8 shows a very good fit for training set. 
+
+```{r}
+# Fit a model with intercept only
+mod_mult_0 <- lm(SalePrice ~ GrLivArea + OverallQual + Neighborhood, data = train_set)
+tidy(mod_mult_0)
+glance(mod_mult_0)
+```
+
+
+###Exercise 5
+*Evaluate the model on test_set using the root mean squared error (RMSE). Use the predict function to get the model predictions for the testing set. Recall that RMSE is the square root of the mean of the squared errors:*
+
+```{r}
+test_predictions <- predict(mod_mult_0, newdata = test_set)
+(rmse <- sqrt(mean((test_set$SalePrice - test_predictions)^2)))
+
+```
+
+###Exercise 6 (OPTIONAL - won’t be graded)
+
+*Feel free to play around with linear regression. Add some other features and see how the model results change. Test the model on test_set to compare the RMSE’s.*
+
+Adding Lot Size and removing neighbourhood factors - interestingly the adjusted R square decreased and RMSE error increased. Clearly the earlier model was better fit
+
+Now adding yearBuilt feature to earlier model - this gave better adjusted R square of 0.81 but RMSE increased simultaneously. 
+
+```{r}
+mod_mult_3 <- lm(SalePrice ~ GrLivArea + OverallQual + Neighborhood + YearBuilt, data = train_set)
+tidy(mod_mult_3)
+glance(mod_mult_3)
+test_predictions <- predict(mod_mult_3, newdata = test_set)
+(rmse <- sqrt(mean((test_set$SalePrice - test_predictions)^2)))
+
+```
+
+***
+
+###Exercise 7
+*One downside of the linear model is that it is sensitive to unusual values because the distance incorporates a squared term. Fit a linear model to the simulated data below, and visualise the results. Rerun a few times to generate different simulated datasets. What do you notice about the model?*
+
+Linear model is good fit as evident but the coefficient and RMSE values vary significantly on every rerun. RMSE varied from as low as 0.4 to 0.9. Setting the seed has controled the variation of coefficient and p-value to great degree. 
+
+```{r}
+sim1a <- tibble(
+  x1 = rep(1:10, each = 3),
+  y1 = x1 * 1.5 + 6 + rt(length(x1), df = 2)
+)
+
+sim1a %>% ggplot(mapping = aes(x= x1,y= y1)) + geom_smooth()
+set.seed(100)
+(sim1a_mutated <- sim1a %>% mutate(Id = row_number()))
+train_set <- sim1a_mutated %>% sample_frac(0.7)
+test_set <- sim1a_mutated%>% filter(!( Id %in% train_set$Id))
+
+mod <- lm(y1 ~ x1, data = train_set)
+tidy(mod)
+glance(mod)
+
+```
+
+```{r}
+test_mod <- predict(mod, newdata = test_set)
+(rmse <- sqrt(mean((test_set$y1 - test_mod)^2)))
+```
+
